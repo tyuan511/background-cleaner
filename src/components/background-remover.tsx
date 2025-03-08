@@ -20,6 +20,7 @@ export function BackgroundRemover() {
   const [processedImage, setProcessedImage] = useState<string | null>(null)
   const [isProcessing, setIsProcessing] = useState(false)
   const [statusMessage, setStatusMessage] = useState('')
+  const [isDragging, setIsDragging] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -46,6 +47,45 @@ export function BackgroundRemover() {
 
   const handleUploadClick = () => {
     fileInputRef.current?.click()
+  }
+
+  const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault()
+    e.stopPropagation()
+    setIsDragging(true)
+  }
+
+  const handleDragLeave = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault()
+    e.stopPropagation()
+    setIsDragging(false)
+  }
+
+  const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault()
+    e.stopPropagation()
+    setIsDragging(false)
+
+    const files = e.dataTransfer.files
+    if (files.length > 0) {
+      const file = files[0]
+
+      // 检查文件类型
+      if (!file.type.startsWith('image/')) {
+        toast.error('请选择图片文件')
+        return
+      }
+
+      const reader = new FileReader()
+      reader.onload = () => {
+        setOriginalImage({
+          src: reader.result as string,
+          file,
+        })
+        setProcessedImage(null)
+      }
+      reader.readAsDataURL(file)
+    }
   }
 
   const removeBackground = async () => {
@@ -160,13 +200,16 @@ export function BackgroundRemover() {
                 </Label>
 
                 <div
-                  className="border-2 border-dashed rounded-lg p-8 text-center cursor-pointer hover:bg-muted/50 transition-colors"
+                  className={`border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition-colors ${isDragging ? 'bg-primary/10 border-primary' : 'hover:bg-muted/50'}`}
                   onClick={handleUploadClick}
+                  onDragOver={handleDragOver}
+                  onDragLeave={handleDragLeave}
+                  onDrop={handleDrop}
                 >
                   <div className="flex flex-col items-center gap-4">
                     <Upload className="h-12 w-12 text-muted-foreground" />
                     <div>
-                      <p className="font-medium">点击或拖拽上传图片</p>
+                      <p className="font-medium">点击或拖拽图片到此处</p>
                       <p className="text-sm text-muted-foreground mt-1">
                         支持 JPG, PNG, WebP 格式
                       </p>

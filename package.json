@@ -56,8 +56,7 @@
     }
   },
   "simple-git-hooks": {
-    "pre-commit": "pnpm lint-staged",
-    "prepare-commit-msg": "exec < /dev/tty && npx cz --hook || true"
+    "pre-commit": "pnpm lint-staged"
   },
   "lint-staged": {
     "*": "eslint --fix"
