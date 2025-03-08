@@ -1,18 +1,8 @@
 import type { Metadata } from 'next'
-import { ThemeProvider } from 'next-themes'
-import { Geist, Geist_Mono } from 'next/font/google'
+import { ThemeModeToggle } from '@/components/theme-mode-toggle'
+import { ThemeProvider } from '@/components/theme-provider'
 import { Toaster } from 'sonner'
 import './index.css'
-
-const geistSans = Geist({
-  variable: '--font-geist-sans',
-  subsets: ['latin'],
-})
-
-const geistMono = Geist_Mono({
-  variable: '--font-geist-mono',
-  subsets: ['latin'],
-})
 
 export const metadata: Metadata = {
   title: '背景移除工具 - 一键移除图片背景',
@@ -26,12 +16,11 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="zh-CN" suppressHydrationWarning>
-      <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
-      >
+      <body>
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
           {children}
           <Toaster position="top-center" closeButton richColors />
+          <ThemeModeToggle className="fixed top-4 right-4" />
         </ThemeProvider>
       </body>
     </html>

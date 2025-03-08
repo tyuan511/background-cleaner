@@ -189,7 +189,7 @@ export function BackgroundRemover() {
                       size="sm"
                       onClick={handleUploadClick}
                     >
-                      <ArrowRightLeftIcon className="mr-2 h-4 w-4" />
+                      <ArrowRightLeftIcon className="mr-1 h-4 w-4" />
                       更换图片
                     </Button>
                     {processedImage && (
@@ -202,8 +202,8 @@ export function BackgroundRemover() {
                           link.click()
                         }}
                       >
-                        <DownloadIcon className="mr-2 h-4 w-4" />
-                        下载
+                        <DownloadIcon className="mr-1 h-4 w-4" />
+                        下载图片
                       </Button>
                     )}
                   </div>
