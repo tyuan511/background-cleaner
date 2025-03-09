@@ -3,11 +3,13 @@
 import type { RawImage } from '@huggingface/transformers'
 
 import { Button } from '@/components/ui/button'
+
 import { Label } from '@/components/ui/label'
 import { pipeline } from '@huggingface/transformers'
-import { ArrowRightLeftIcon, DownloadIcon, Image as ImageIcon, Loader2, Upload } from 'lucide-react'
-import { useRef, useState } from 'react'
+import { ArrowRightLeftIcon, CopyIcon, DownloadIcon, Image as ImageIcon, Loader2, Upload } from 'lucide-react'
+import { useCallback, useRef, useState } from 'react'
 import { toast } from 'sonner'
+
 import { ImageComparison } from './image-comparison'
 
 interface ImageData {
@@ -103,7 +105,6 @@ export function BackgroundRemover() {
             // 根据不同的状态显示相应提示
             if (progressInfo && typeof progressInfo === 'object') {
               const { status, file, progress } = progressInfo as { status: string, name: string, file: string, progress?: number }
-              console.log(progressInfo)
               // 根据状态更新提示信息
               switch (status) {
                 case 'initiate':
@@ -140,8 +141,7 @@ export function BackgroundRemover() {
         }) as any as RawImage[]
 
         // 处理结果
-        if (result) {
-          console.log(result[0])
+        if (result && result.length > 0) {
           const blob = await result[0].toBlob()
           const url = URL.createObjectURL(blob)
           setProcessedImage(url)
@@ -170,6 +170,32 @@ export function BackgroundRemover() {
       setIsProcessing(false)
     }
   }
+
+  const onDownload = useCallback(() => {
+    if (!processedImage || !originalImage)
+      return
+    const link = document.createElement('a')
+    link.href = processedImage
+    link.download = `${originalImage.file.name.split('.')[0]}-no-bg.png`
+    link.click()
+  }, [processedImage, originalImage])
+
+  const onCopy = useCallback(async () => {
+    if (!processedImage)
+      return
+
+    try {
+      const res = await fetch(processedImage)
+      const blob = await res.blob()
+      const item = new ClipboardItem({ 'image/png': blob })
+      await navigator.clipboard.write([item])
+      toast.success('图片已复制到剪贴板')
+    }
+    catch (err) {
+      console.error('复制到剪贴板失败:', err)
+      toast.error('复制失败，请重试')
+    }
+  }, [processedImage])
 
   return (
     <div className="w-full max-w-4xl mx-auto">
@@ -229,25 +255,20 @@ export function BackgroundRemover() {
                   <div className="flex items-center gap-2">
                     <Button
                       variant="outline"
-                      size="sm"
+                      size="icon"
                       onClick={handleUploadClick}
                     >
-                      <ArrowRightLeftIcon className="mr-1 h-4 w-4" />
-                      更换图片
+                      <ArrowRightLeftIcon className="h-4 w-4" />
                     </Button>
                     {processedImage && (
-                      <Button
-                        size="sm"
-                        onClick={() => {
-                          const link = document.createElement('a')
-                          link.href = processedImage
-                          link.download = `${originalImage.file.name.split('.')[0]}-no-bg.png`
-                          link.click()
-                        }}
-                      >
-                        <DownloadIcon className="mr-1 h-4 w-4" />
-                        下载图片
-                      </Button>
+                      <>
+                        <Button size="icon" variant="outline" onClick={onCopy}>
+                          <CopyIcon className="h-4 w-4" />
+                        </Button>
+                        <Button size="icon" onClick={onDownload}>
+                          <DownloadIcon className="h-4 w-4" />
+                        </Button>
+                      </>
                     )}
                   </div>
                 </div>
