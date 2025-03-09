@@ -3,13 +3,16 @@
     "incremental": true,
     "target": "ES2017",
     "jsx": "preserve",
-    "lib": ["dom", "dom.iterable", "esnext"],
+    "lib": ["dom", "dom.iterable", "esnext", "webworker"],
     "module": "esnext",
     "moduleResolution": "bundler",
     "paths": {
       "@/*": ["./src/*"]
     },
     "resolveJsonModule": true,
+    "types": [
+      "@serwist/next/typings"
+    ],
     "allowJs": true,
     "strict": true,
     "noEmit": true,
@@ -23,5 +26,5 @@
     ]
   },
   "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts"],
-  "exclude": ["node_modules"]
+  "exclude": ["node_modules", "public/sw.js"]
 }
