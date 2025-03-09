@@ -39,7 +39,12 @@ export function ImageComparison({ originalImage, processedImage, className = '' 
     if (!processedImage)
       return
 
-    setSliderPosition(50)
+    if (sliderPosition < 50) {
+      setSliderPosition(0)
+    }
+    else {
+      setSliderPosition(100)
+    }
   }
 
   return (
