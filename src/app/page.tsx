@@ -6,11 +6,12 @@ import { ImageComparison } from '@/components/image-comparison'
 
 import { ImageSelector } from '@/components/image-selector'
 import { Button } from '@/components/ui/button'
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
 import { Label } from '@/components/ui/label'
 import { pipeline } from '@huggingface/transformers'
-import { CheckIcon, CopyIcon, DownloadIcon, ImageIcon, Loader2, Loader2Icon } from 'lucide-react'
+import JSZip from 'jszip'
+import { CheckIcon, CopyIcon, DownloadIcon, ImageDownIcon, ImageIcon, Loader2, Loader2Icon, MoreHorizontalIcon, TrashIcon } from 'lucide-react'
 import Image from 'next/image'
-
 import { useCallback, useRef, useState } from 'react'
 import { toast } from 'sonner'
 
@@ -22,7 +23,7 @@ interface ImageData {
 
 export default function Home() {
   const [images, setImages] = useState<ImageData[]>([])
-  const [currentIndex, setCurrentIndex] = useState<number>(0)
+  const [currentIndex, setCurrentIndex] = useState(0)
   const [isProcessing, setIsProcessing] = useState(false)
   const [statusMessage, setStatusMessage] = useState('')
   const segmenter = useRef<BackgroundRemovalPipeline>(null)
@@ -135,13 +136,12 @@ export default function Home() {
     }
   }, [images, onProgress])
 
-  const removeBackground = async () => {
+  const removeBackground = async (fromIdx = 0) => {
     if (!currentImage)
       return
     setIsProcessing(true)
-
     try {
-      let index = currentIndex
+      let index = fromIdx
       while (index <= images.length - 1) {
         await removeIndexImage(index)
         index += 1
@@ -154,7 +154,6 @@ export default function Home() {
     }
   }
 
-  // 切换到指定图片
   const switchToImage = (index: number) => {
     if (index >= 0 && index < images.length && !isProcessing) {
       setCurrentIndex(index)
@@ -187,11 +186,35 @@ export default function Home() {
     }
   }, [currentProcessedImage])
 
+  const clearAll = useCallback(() => {
+    setImages([])
+    setCurrentIndex(0)
+    setIsProcessing(false)
+    setStatusMessage('')
+  }, [])
+
+  const onDownloadAll = useCallback(async () => {
+    if (!images.length)
+      return
+    const zip = new JSZip()
+    await Promise.all(images.map(async (image) => {
+      if (!image.processedSrc)
+        return
+      const imageBlob = await fetch(image.processedSrc).then(res => res.blob())
+      zip.file(`${image.file.name.split('.')[0]}-no-bg.png`, imageBlob)
+    }))
+    const content = await zip.generateAsync({ type: 'blob' })
+    const link = document.createElement('a')
+    link.href = URL.createObjectURL(content)
+    link.download = `抠图结果-${new Date().toLocaleString()}.zip`
+    link.click()
+  }, [images])
+
   return (
     <div className="min-h-screen py-12 px-4 sm:px-6 lg:px-8">
       <div className="w-full max-w-4xl mx-auto">
         <div className="mb-8 text-center">
-          <h1 className="text-3xl font-bold mb-2">背景移除工具</h1>
+          <h1 className="w-max mx-auto text-3xl font-bold mb-2 bg-gradient-to-r from-[#5433FF] via-[#20BDFF] to-[#A5FECB] text-transparent bg-clip-text">图片背景移除器</h1>
           <p className="text-muted-foreground">
             上传图片，一键移除背景
           </p>
@@ -217,16 +240,39 @@ export default function Home() {
                       {` (${currentIndex + 1}/${images.length})`}
                     </h2>
                     <div className="flex items-center gap-2">
-                      {currentProcessedImage && (
-                        <>
-                          <Button size="icon" variant="outline" disabled={isProcessing} onClick={onCopy} title="复制到剪贴板">
-                            <CopyIcon className="h-4 w-4" />
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button size="icon" variant="outline" disabled={isProcessing} title="更多">
+                            <MoreHorizontalIcon className="h-4 w-4" />
                           </Button>
-                          <Button size="icon" onClick={onDownload} disabled={isProcessing} title="下载处理后的图片">
-                            <DownloadIcon className="h-4 w-4" />
-                          </Button>
-                        </>
-                      )}
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          {currentProcessedImage && (
+                            <>
+                              <DropdownMenuItem onClick={onCopy}>
+                                <CopyIcon className="h-4 w-4" />
+                                复制当前
+                              </DropdownMenuItem>
+                              <DropdownMenuItem onClick={onDownload}>
+                                <ImageDownIcon className="h-4 w-4" />
+                                下载当前
+                              </DropdownMenuItem>
+                            </>
+                          )}
+                          {images.every(image => image.processedSrc) && (
+                            <DropdownMenuItem onClick={onDownloadAll}>
+                              <DownloadIcon className="h-4 w-4" />
+                              下载全部
+                            </DropdownMenuItem>
+                          )}
+                          {!isProcessing && (
+                            <DropdownMenuItem variant="destructive" onClick={clearAll}>
+                              <TrashIcon className="h-4 w-4" />
+                              清空全部
+                            </DropdownMenuItem>
+                          )}
+                        </DropdownMenuContent>
+                      </DropdownMenu>
                     </div>
                   </div>
 
@@ -236,35 +282,33 @@ export default function Home() {
                     className="aspect-square"
                   />
 
-                  <div className="mt-4 overflow-x-auto pb-2">
-                    <div className="flex gap-2">
-                      {images.map((image, index) => (
-                        <div
-                          key={image.file.name}
-                          className={`relative shrink-0 w-20 h-20 rounded-lg overflow-hidden cursor-pointer border-2 transition-colors ${index === currentIndex ? 'border-primary' : 'border-transparent hover:border-primary/50'}`}
-                          onClick={() => switchToImage(index)}
-                        >
-                          <Image
-                            src={image.src}
-                            alt={image.file.name}
-                            fill
-                            className="object-cover"
-                          />
-                          {image.processedSrc && (
+                  <div className="flex gap-2 mt-4 overflow-x-auto pb-2">
+                    {images.map((image, index) => (
+                      <div
+                        key={image.file.name}
+                        className={`relative shrink-0 w-20 h-20 rounded-lg overflow-hidden cursor-pointer border-2 transition-colors ${index === currentIndex ? 'border-primary' : 'border-transparent hover:border-primary/50'}`}
+                        onClick={() => switchToImage(index)}
+                      >
+                        <Image
+                          src={image.src}
+                          alt={image.file.name}
+                          fill
+                          className="object-cover"
+                        />
+                        {image.processedSrc && (
+                          <div className="size-4 rounded-full bg-primary absolute top-0.5 right-0.5 flex items-center justify-center">
+                            <CheckIcon className="text-white" size={12} />
+                          </div>
+                        )}
+                        {
+                          isProcessing && currentIndex === index && (
                             <div className="size-4 rounded-full bg-primary absolute top-0.5 right-0.5 flex items-center justify-center">
-                              <CheckIcon className="text-white" size={12} />
+                              <Loader2Icon className="text-white animate-spin" size={12} />
                             </div>
-                          )}
-                          {
-                            isProcessing && currentIndex === index && (
-                              <div className="size-4 rounded-full bg-primary absolute top-0.5 right-0.5 flex items-center justify-center">
-                                <Loader2Icon className="text-white animate-spin" size={12} />
-                              </div>
-                            )
-                          }
-                        </div>
-                      ))}
-                    </div>
+                          )
+                        }
+                      </div>
+                    ))}
                   </div>
                 </div>
               )}
@@ -272,27 +316,27 @@ export default function Home() {
               {/* 处理按钮 */}
               {images.length > 0 && currentImage && (
                 <Button
-                  onClick={removeBackground}
+                  onClick={() => removeBackground()}
                   disabled={isProcessing}
                   className="w-full mt-4"
                 >
                   {isProcessing
                     ? (
                         <>
-                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          <Loader2 className="h-4 w-4 animate-spin" />
                           正在处理...
                         </>
                       )
                     : currentProcessedImage
                       ? (
                           <>
-                            <ImageIcon className="mr-2 h-4 w-4" />
+                            <ImageIcon className="h-4 w-4" />
                             重新处理
                           </>
                         )
                       : (
                           <>
-                            <ImageIcon className="mr-2 h-4 w-4" />
+                            <ImageIcon className="h-4 w-4" />
                             移除背景
                           </>
                         )}
@@ -314,7 +358,7 @@ export default function Home() {
           ©
           {new Date().getFullYear()}
           {' '}
-          背景移除工具 | 一键移除图片背景
+          图片背景移除器 | 一键移除图片背景
         </p>
       </footer>
     </div>

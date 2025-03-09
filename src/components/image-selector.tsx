@@ -1,4 +1,4 @@
-import { UploadIcon } from 'lucide-react'
+import { ImagePlusIcon } from 'lucide-react'
 import { useRef, useState } from 'react'
 import { toast } from 'sonner'
 
@@ -72,7 +72,7 @@ export function ImageSelector({ onChange }: Props) {
         onDrop={handleDrop}
       >
         <div className="flex flex-col items-center gap-4">
-          <UploadIcon className="h-12 w-12 text-muted-foreground" />
+          <ImagePlusIcon className="h-10 w-10 text-muted-foreground" />
           <div>
             <p className="font-medium">点击或拖拽图片到此处</p>
             <p className="text-sm text-muted-foreground mt-1">
