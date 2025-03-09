@@ -39,12 +39,7 @@ export function ImageComparison({ originalImage, processedImage, className = '' 
     if (!processedImage)
       return
 
-    if (sliderPosition < 50) {
-      setSliderPosition(0) // 如果分割线在左半部分，移动到最左边
-    }
-    else {
-      setSliderPosition(100) // 如果分割线在右半部分，移动到最右边
-    }
+    setSliderPosition(50)
   }
 
   return (
