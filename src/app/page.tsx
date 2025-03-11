@@ -358,7 +358,16 @@ export default function Home() {
           ©
           {new Date().getFullYear()}
           {' '}
-          图片背景移除器 | 一键移除图片背景
+          <a
+            href="https://github.com/tyuan511/background-cleaner"
+            className="hover:underline"
+            target="_blank"
+            rel="noreferrer"
+          >
+            Background Cleaner
+          </a>
+          {' '}
+          | Built with Next.js & Hugging Face Transformers
         </p>
       </footer>
     </div>

@@ -1,7 +1,7 @@
 import type { Metadata, Viewport } from 'next'
-import { ThemeModeToggle } from '@/components/theme-mode-toggle'
 import { ThemeProvider } from '@/components/theme-provider'
 import { ToasterProvider } from '@/components/toaster-provider'
+import { Toolbar } from '@/components/toolbar'
 import { Analytics } from '@vercel/analytics/react'
 import { SpeedInsights } from '@vercel/speed-insights/next'
 import './index.css'
@@ -59,7 +59,7 @@ export default function RootLayout({
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
           {children}
           <ToasterProvider />
-          <ThemeModeToggle className="fixed top-4 right-4" />
+          <Toolbar />
         </ThemeProvider>
         <Analytics />
         <SpeedInsights />
