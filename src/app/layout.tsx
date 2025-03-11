@@ -2,6 +2,8 @@ import type { Metadata, Viewport } from 'next'
 import { ThemeModeToggle } from '@/components/theme-mode-toggle'
 import { ThemeProvider } from '@/components/theme-provider'
 import { ToasterProvider } from '@/components/toaster-provider'
+import { Analytics } from '@vercel/analytics/react'
+import { SpeedInsights } from '@vercel/speed-insights/next'
 import './index.css'
 
 const APP_NAME = '图片背景移除器'
@@ -59,6 +61,8 @@ export default function RootLayout({
           <ToasterProvider />
           <ThemeModeToggle className="fixed top-4 right-4" />
         </ThemeProvider>
+        <Analytics />
+        <SpeedInsights />
       </body>
     </html>
   )
